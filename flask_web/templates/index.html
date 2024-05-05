@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Shopping Trolley</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Add event listeners for buttons
+            $('#add-button').click(function() {
+                // Call Flask function to activate camera and scan barcode
+                $.ajax({
+                    url: '/scan_barcode',
+                    type: 'POST',
+                    success: function(response) {
+                        // Update the UI with the scanned barcode data
+                        $('#barcode-data').text(response.barcode_data);
+                    }
+                });
+            });
+
+            $('#remove-button').click(function() {
+                // Call Flask function to remove an item from the cart
+                $.ajax({
+                    url: '/remove_item',
+                    type: 'POST',
+                    data: JSON.stringify({ 'barcode_data': $('#barcode-data').text() }),
+                    contentType: 'application/json;charset=UTF-8',
+                    success: function(response) {
+                        // Update the UI with the updated cart data
+                        updateCartUI(response.cart_data);
+                    }
+                });
+            });
+
+            $('#generate-bill').click(function() {
+                // Call Flask function to generate the bill
+                $.ajax({
+                    url: '/generate_bill',
+                    type: 'GET',
+                    success: function(response) {
+                        // Display the bill in a modal or a new webpage
+                        $('#bill-modal').html(response.bill_html);
+                        $('#bill-modal').modal('show');
+                    }
+                });
+            });
+
+            $('#add-multiple-button').click(function() {
+                // Call Flask function to add multiple items
+                var quantity = $('#quantity-input').val();
+                $.ajax({
+                    url: '/add_multiple_items',
+                    type: 'POST',
+                    data: { 'quantity': quantity },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            // Update the UI with the scanned barcode data
+                            $('#barcode-data').text(response.barcode_data);
+                        } else {
+                            // Display the error message
+                            alert(response.message);
+                        }
+                    }
+                });
+            });
+        });
+
+        function updateCartUI(cart_data) {
+            // Update the UI with the cart data
+            // Example: Clear the cart list and populate with new data
+            $('#cart-list').empty();
+            $.each(cart_data, function(index, item) {
+                $('#cart-list').append('<li>' + item.name + ' - ' + item.quantity + ' - ' + item.price + '</li>');
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Smart Shopping Trolley</h1>
+    <button id="add-button">Add Item</button>
+    <button id="add-multiple-button">Add Multiple Items</button>
+    <input type="number" id="quantity-input" placeholder="Enter quantity">
+    <button id="remove-button">Remove Item</button>
+    <button id="generate-bill">Generate Bill</button>
+    <div>
+        <h3>Scanned Barcode:</h3>
+        <p id="barcode-data"></p>
+    </div>
+    <div>
+        <h3>Cart:</h3>
+        <ul id="cart-list"></ul>
+    </div>
+    <div id="bill-modal" class="modal"></div>
+</body>
+</html>
